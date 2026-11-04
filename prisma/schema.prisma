@@ -1,0 +1,634 @@
+// MUSE — data model.
+//
+// Covers the entities in PRD §22. Phases 0-3 (auth, muses, chat, memory) use
+// most of this; Call, Notification, Schedule and Subscription are defined now
+// but barely used yet, so that adding voice and proactive later is a feature
+// change rather than a migration of live conversation data.
+//
+// Indexes follow §49: user_id, muse_id, conversation_id, created_at,
+// last_message_at.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 moved the connection URL out of the schema; it lives in
+// prisma.config.ts for the CLI and comes from the driver adapter at runtime.
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- enums
+
+enum Visibility {
+  PRIVATE
+  PUBLIC
+  UNLISTED
+}
+
+enum MuseStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum SenderType {
+  USER
+  MUSE
+  SYSTEM
+}
+
+enum MemoryType {
+  PERMANENT
+  PREFERENCE
+  GOAL
+  RELATIONSHIP
+  EVENT
+  RECENT_SUMMARY
+}
+
+enum RelationshipStage {
+  NEW
+  ACQUAINTED
+  FAMILIAR
+  ESTABLISHED
+  DEEP
+}
+
+enum InitiationFrequency {
+  NEVER
+  RARELY
+  SOMETIMES
+  OFTEN
+}
+
+/// Used for both messaging and calling permissions (§26).
+enum PermissionLevel {
+  NEVER
+  SCHEDULED
+  ALLOWED
+}
+
+enum CallStatus {
+  COMPLETED
+  MISSED
+  CANCELLED
+  FAILED
+}
+
+enum Plan {
+  FREE
+  PLUS
+}
+
+enum ScheduleType {
+  MESSAGE
+  CALL
+}
+
+enum ScheduleFrequency {
+  ONCE
+  DAILY
+  WEEKLY
+}
+
+enum NotificationKind {
+  MESSAGE
+  SCHEDULED_CALL
+  INCOMING_CALL
+  REMINDER
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  ACTIONED
+  DISMISSED
+}
+
+// ---------------------------------------------------------------- user
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String?
+  /// bcrypt of the one-time recovery code shown at sign-up; resets the password without email.
+  recoveryHash String?
+  avatarUrl    String?
+  timezone     String    @default("UTC")
+
+  /// §12/§37: a global kill switch for memory, separate from deleting it.
+  memoryEnabled Boolean @default(true)
+  /// §16: global proactive off switch, independent of any per-Muse setting.
+  proactiveEnabled Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  /// Soft delete, so §37 account deletion can be staged and reversed briefly.
+  deletedAt DateTime?
+
+  accounts      Account[]
+  sessions      Session[]
+  muses         Muse[]
+  conversations Conversation[]
+  memories      Memory[]
+  relationships Relationship[]
+  savedMuses    SavedMuse[]
+  calls         Call[]
+  schedules     Schedule[]
+  notifications Notification[]
+  subscription  Subscription?
+  reports       Report[]
+  soloSync      SoloSync?
+
+  @@index([deletedAt])
+}
+
+/// The /solo app keeps everything in the browser. Signed in, a copy of that state
+/// (without photos, voice notes or videos, which stay on each device) is kept
+/// here so another phone or computer can pick it up. One row per account.
+model SoloSync {
+  userId    String   @id
+  /// The whole solo state as JSON, embeddings removed.
+  data      String
+  /// Bumped on every write; a write that is not based on the current one is refused.
+  rev       Int      @default(0)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Auth.js adapter tables. Only the credentials provider is wired up for now,
+// but leaving these in place means adding Google/Apple later needs no migration.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------- muse
+
+model Muse {
+  id               String     @id @default(cuid())
+  /// Null for seed Muses that ship with the product and belong to nobody.
+  ownerUserId      String?
+  name             String
+  avatarUrl        String?
+  /// The one-line description shown on cards (§3).
+  description      String
+  relationshipType String
+  category         String?
+  languages        String[]   @default(["English"])
+  visibility       Visibility @default(PRIVATE)
+  status           MuseStatus @default(ACTIVE)
+
+  /// Denormalised for §19 discovery sorting. Cheap to keep current, and it
+  /// avoids counting rows across every relationship on each listing.
+  interactionCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner         User?            @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  personality   MusePersonality?
+  behaviour     MuseBehaviour?
+  voice         MuseVoice?
+  conversations Conversation[]
+  memories      Memory[]
+  relationships Relationship[]
+  savedBy       SavedMuse[]
+  calls         Call[]
+  schedules     Schedule[]
+  notifications Notification[]
+  reports       Report[]
+
+  @@index([ownerUserId])
+  @@index([visibility, status])
+  @@index([category])
+  @@index([interactionCount])
+}
+
+model MusePersonality {
+  id     String @id @default(cuid())
+  museId String @unique
+
+  traits             String[] @default([])
+  values             String?
+  humour             String?
+  emotionalStyle     String?
+  opinions           String?
+  customInstructions String?
+
+  // §Step 3 communication style. Kept on personality rather than its own table
+  // because nothing reads one without the other.
+  tone         String?
+  formality    String?
+  vocabulary   String?
+  sentenceLength String?
+  catchphrases String?
+  dialect      String?
+
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+}
+
+model MuseBehaviour {
+  id     String @id @default(cuid())
+  museId String @unique
+
+  initiationFrequency InitiationFrequency @default(NEVER)
+  messagingPermission PermissionLevel     @default(NEVER)
+  callingPermission   PermissionLevel     @default(NEVER)
+
+  /// Minutes from local midnight, so comparison is timezone-arithmetic only.
+  quietHoursStart Int @default(1320) // 22:00
+  quietHoursEnd   Int @default(480)  // 08:00
+
+  maxDailyProactive Int @default(1)
+
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+}
+
+model MuseVoice {
+  id       String  @id @default(cuid())
+  museId   String  @unique
+  voiceId  String
+  name     String
+  accent   String?
+  tone     String?
+  energy   String?
+  previewUrl String?
+
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------- talk
+
+model Conversation {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  title String?
+  /// Rolling summary of turns older than the recent window (§10 layer B), so
+  /// context stays bounded without discarding what happened.
+  summary String?
+
+  startedAt     DateTime  @default(now())
+  lastMessageAt DateTime  @default(now())
+  deletedAt     DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse     Muse      @relation(fields: [museId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId, lastMessageAt])
+  @@index([museId])
+  @@index([userId, museId])
+}
+
+model Message {
+  id             String     @id @default(cuid())
+  conversationId String
+  senderType     SenderType
+  content        String
+  audioUrl       String?
+  /// Model, token counts, latency. Server-side only -- §8 forbids showing it.
+  metadata       Json?
+
+  createdAt DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  memories     Memory[]
+
+  @@index([conversationId, createdAt])
+}
+
+// ---------------------------------------------------------------- memory
+
+model Memory {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  content    String
+  type       MemoryType @default(PERMANENT)
+  /// 1-5. Ranking input alongside similarity and recency (§13).
+  importance Int        @default(3)
+  /// 0-1. How sure the extractor was; low-confidence memories rank lower and
+  /// are the first thing to show a user who asks why a Muse got it wrong.
+  confidence Float      @default(0.7)
+
+  /// Stored as a plain float array rather than a pgvector column. At MVP scale
+  /// (hundreds of memories per user-Muse pair) cosine similarity in the
+  /// retriever is exact and costs nothing, and it keeps the schema portable to
+  /// any Postgres without the extension. MemoryRetriever is an interface so a
+  /// pgvector implementation can replace it without touching callers.
+  embedding Float[] @default([])
+
+  sourceMessageId String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastRetrievedAt DateTime?
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse          Muse     @relation(fields: [museId], references: [id], onDelete: Cascade)
+  sourceMessage Message? @relation(fields: [sourceMessageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, museId])
+  @@index([userId, museId, type])
+  @@index([createdAt])
+}
+
+model Relationship {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  firstInteractionAt DateTime  @default(now())
+  lastInteractionAt  DateTime  @default(now())
+  interactionCount   Int       @default(0)
+  messageCount       Int       @default(0)
+  callCount          Int       @default(0)
+  totalVoiceMinutes  Float     @default(0)
+
+  stage RelationshipStage @default(NEW)
+  /// §14: never shown to users. Internal personalisation signal only.
+  affinityScore Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, museId])
+  @@index([userId, lastInteractionAt])
+}
+
+model SavedMuse {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, museId])
+  @@index([userId])
+}
+
+// ------------------------------------------------- voice / proactive (later)
+
+model Call {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  startedAt           DateTime   @default(now())
+  endedAt             DateTime?
+  durationSeconds     Int        @default(0)
+  status              CallStatus @default(COMPLETED)
+  summary             String?
+  transcriptReference String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+  @@index([museId])
+}
+
+model Schedule {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  type      ScheduleType
+  frequency ScheduleFrequency
+  /// Minutes from local midnight in the schedule's own timezone.
+  scheduledTime Int
+  timezone      String            @default("UTC")
+  enabled       Boolean           @default(true)
+  lastRunAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+
+  @@index([enabled, scheduledTime])
+  @@index([userId])
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  museId String?
+
+  kind    NotificationKind
+  title   String
+  body    String?
+  readAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse Muse? @relation(fields: [museId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+// ---------------------------------------------------------------- commerce
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  plan      Plan      @default(FREE)
+  status    String    @default("active")
+  renewsAt  DateTime?
+  /// §39: payments are mocked for MVP; this records intent so the entitlement
+  /// layer is real from day one and only the payment provider is stubbed.
+  provider  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id     String @id @default(cuid())
+  userId String
+  museId String
+
+  reason  String
+  details String?
+  status  ReportStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muse Muse @relation(fields: [museId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([museId])
+}
+
+// ------------------------------------------------- proactive outreach (solo)
+//
+// Solo mode has no accounts and keeps every character, conversation and
+// memory in the browser. Outreach is the one thing that has to happen with the
+// browser closed, so it is the one thing the server holds -- and it holds as
+// little as possible: an anonymous device with its settings and push address,
+// and for each reason to reach out, the finished message and when to send it.
+// Never the persona, never the memories, never the conversation.
+//
+// Settings reuse the account app's names (User.proactiveEnabled/timezone,
+// MuseBehaviour.initiationFrequency/quietHours*/maxDailyProactive) so the two
+// can be merged once accounts are on.
+
+enum ProactiveTriggerType {
+  UPCOMING_EVENT
+  REMINDER
+  FOLLOW_UP
+  GOAL_CHECK_IN
+}
+
+enum ProactiveTriggerStatus {
+  PENDING
+  SENT
+  SKIPPED
+  CANCELLED
+  EXPIRED
+}
+
+enum ProactiveInteractionStatus {
+  SENT
+  OPENED
+  RESPONDED
+  DISMISSED
+  FAILED
+}
+
+model OutreachDevice {
+  /// Random, generated in the browser and known only to it. Doubles as its credential.
+  id       String @id
+  timezone String @default("UTC")
+
+  proactiveEnabled    Boolean             @default(false)
+  initiationFrequency InitiationFrequency @default(SOMETIMES)
+  /// Minutes from local midnight, as in MuseBehaviour.
+  quietHoursStart   Int @default(1320) // 22:00
+  quietHoursEnd     Int @default(480)  // 08:00
+  maxDailyProactive Int @default(1)
+  /// Which Muses may text first (MuseBehaviour.messagingPermission = ALLOWED, per Muse).
+  allowedMuseIds String[] @default([])
+
+  /// Web Push subscription. Absent: outreach still waits in the app for next open.
+  pushEndpoint String?
+  pushP256dh   String?
+  pushAuth     String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastSeenAt DateTime @default(now())
+
+  triggers     ProactiveTrigger[]
+  interactions ProactiveInteraction[]
+}
+
+model ProactiveTrigger {
+  id       String @id @default(cuid())
+  deviceId String
+  /// The Muse's id in the browser's store, and the name to show on the notification.
+  museId   String
+  museName String
+
+  type ProactiveTriggerType
+  /// A few words, for the decision engine and the record: "interview on Friday".
+  reason         String
+  /// The browser-side memory this came from. One trigger per memory, ever.
+  sourceMemoryId String
+
+  /// When the event itself is, if it has a moment. Past it, an UPCOMING_EVENT is moot.
+  eventAt      DateTime?
+  scheduledFor DateTime
+  expiresAt    DateTime
+  /// Written in the Muse's voice when the trigger was made, from that memory alone.
+  message      String
+
+  status          ProactiveTriggerStatus @default(PENDING)
+  statusReason    String?
+  lastEvaluatedAt DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  device      OutreachDevice        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  interaction ProactiveInteraction?
+
+  @@unique([deviceId, sourceMemoryId])
+  @@index([status, scheduledFor])
+  @@index([deviceId, museId])
+}
+
+model ProactiveInteraction {
+  id        String @id @default(cuid())
+  deviceId  String
+  museId    String
+  triggerId String @unique
+
+  message     String
+  sentAt      DateTime  @default(now())
+  /// Picked up by the app and added to the conversation.
+  collectedAt DateTime?
+  openedAt    DateTime?
+  respondedAt DateTime?
+  /// Whether a push went out; the app collects it either way.
+  pushed      Boolean   @default(false)
+
+  status ProactiveInteractionStatus @default(SENT)
+
+  device  OutreachDevice   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  trigger ProactiveTrigger @relation(fields: [triggerId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, sentAt])
+}

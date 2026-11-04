@@ -1,0 +1,1336 @@
+/* MUSE — visual system (PRD §47).
+ *
+ * Premium, warm, social, slightly mysterious. Explicitly not a SaaS dashboard:
+ * no corporate blue, no dense tables, no cards-in-a-grid-with-a-drop-shadow.
+ * The page should read as people, not records.
+ *
+ * Colours are measured, not eyeballed. Every value below carries its contrast
+ * ratio against the surface it actually sits on.
+ */
+
+:root {
+  --bg: #0E0D12;
+  --surface: #17161D;
+  --surface-2: #1F1E28;
+  --edge: #2A2836;
+  --edge-lit: #3B3850;
+
+  --ink: #F0EDF2;      /* 16.1:1 on bg */
+  --muted: #B0AABF;    /*  8.3:1 */
+  --faint: #8C87A0;    /*  5.3:1 on bg, 4.8:1 on surface — AA at small sizes */
+
+  --accent: #C9A5F0;   /*  9.6:1 — the "muse" violet */
+  --accent-warm: #F0B98C;
+  --danger: #F0A0A8;
+
+  --sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --serif: var(--font-serif), ui-serif, Georgia, serif;
+
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-full: 999px;
+
+  --tap: 44px;
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -16px rgb(0 0 0 / 0.7);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  /* Two faint sources, violet and warm. Gives the page depth without becoming
+     the gradient soup §47 warns against. */
+  background-image:
+    radial-gradient(90% 50% at 15% -8%, rgb(201 165 240 / 0.09), transparent 60%),
+    radial-gradient(70% 45% at 88% 4%, rgb(240 185 140 / 0.05), transparent 62%);
+  background-attachment: fixed;
+}
+
+a { color: inherit; }
+
+/* ---------------------------------------------------------------- layout */
+
+.shell {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: max(1.75rem, env(safe-area-inset-top)) 1.25rem
+           calc(2rem + env(safe-area-inset-bottom));
+}
+
+.mark {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0;
+}
+
+.display {
+  font-family: var(--serif);
+  font-size: clamp(2.1rem, 8vw, 3rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin: 0.75rem 0 0.75rem;
+  text-wrap: balance;
+}
+
+.lede { color: var(--muted); margin: 0 0 1.5rem; max-width: 46ch; }
+.section-title {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 2.5rem 0 0.9rem;
+  color: var(--ink);
+}
+.fine { color: var(--faint); font-size: 0.78rem; line-height: 1.6; }
+
+/* ---------------------------------------------------------------- controls */
+
+.btn, .btn-ghost {
+  font: inherit;
+  font-weight: 600;
+  min-height: var(--tap);
+  cursor: pointer;
+  border-radius: var(--r-full);
+  padding: 0.65rem 1.4rem;
+  transition: transform 140ms var(--ease), background-color 140ms var(--ease),
+              border-color 140ms var(--ease), opacity 140ms var(--ease);
+}
+.btn {
+  background: var(--accent);
+  color: #16121D;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow);
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); background: #D6B8F5; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--edge-lit);
+  font-weight: 500;
+}
+.btn-ghost:hover { border-color: var(--muted); background: var(--surface); }
+
+.link-btn {
+  font: inherit;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.5rem 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--edge-lit);
+}
+.link-btn:hover { color: var(--ink); }
+
+.field { display: block; margin-bottom: 0.9rem; }
+.field > span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--faint);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+}
+.input, textarea.input {
+  font-family: var(--sans);
+  /* 16px: below this, iOS Safari zooms the page on focus. */
+  font-size: 16px;
+  width: 100%;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  padding: 0.7rem 0.9rem;
+  min-height: var(--tap);
+  transition: border-color 140ms var(--ease), background-color 140ms var(--ease);
+}
+.input:focus { border-color: var(--accent); background: var(--surface-2); outline: none; }
+.input::placeholder { color: var(--faint); }
+
+.row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+
+.error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 0.75rem 0 0;
+}
+
+/* ---------------------------------------------------------------- cards */
+
+/* minmax(0, 1fr), not 1fr.
+   
+   A grid item's default min-width is min-content, and the last-message preview
+   on a card is `white-space: nowrap` — so its min-content width is the whole
+   unbroken sentence, the track grew to fit it, and the page scrolled sideways
+   on every phone by however long the last thing anyone said was. Measured at
+   375px wide: a card with no preview was 338px and correct, the one under
+   "Continue talking" was 378px. */
+.card-grid { display: grid; gap: 0.7rem; grid-template-columns: minmax(0, 1fr); }
+.card-wrap, .muse-card { min-width: 0; }
+/* Same reason one level down: the text column of a card is a flex item. */
+.muse-card > div { min-width: 0; }
+
+.muse-card {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  padding: 0.9rem 1rem;
+  transition: border-color 140ms var(--ease), transform 140ms var(--ease),
+              background-color 140ms var(--ease);
+}
+.muse-card:hover { border-color: var(--edge-lit); background: var(--surface-2); transform: translateY(-1px); }
+
+.avatar {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: #16121D;
+  font-weight: 500;
+}
+.avatar-lg { width: 68px; height: 68px; font-size: 1.7rem; }
+
+.muse-card h3 { margin: 0; font-size: 0.98rem; font-weight: 600; }
+.muse-card .rel { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.04em; }
+.muse-card p { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.85rem; }
+
+.tags { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.tag {
+  font-size: 0.68rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-full);
+  padding: 0.15rem 0.55rem;
+}
+
+.empty {
+  border: 1px dashed var(--edge-lit);
+  border-radius: var(--r-md);
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  color: var(--muted);
+}
+.empty p { margin: 0 0 1rem; }
+
+/* ---------------------------------------------------------------- chat */
+
+.chat-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--edge);
+}
+/* The blur lives on a layer behind the header, not on the header itself: with
+   backdrop-filter on the parent, Chrome let the conversation show through the
+   ⋯ menu that hangs below it. */
+.chat-head::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.chat-head h1 { font-family: var(--serif); font-size: 1.1rem; font-weight: 400; margin: 0; }
+.chat-head .rel {
+  color: var(--faint);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-who { flex: 1; min-width: 0; }
+
+.menu { position: relative; margin-left: auto; flex: 0 0 auto; }
+.menu-btn {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--r-full);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.menu-btn:hover, .menu-btn[aria-expanded="true"] { background: var(--surface-2); color: var(--ink); }
+.menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 10;
+  min-width: 14rem;
+  padding: 0.35rem;
+  background: var(--surface-2);
+  border: 1px solid var(--edge-lit);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.45);
+  display: flex;
+  flex-direction: column;
+  animation: rise 140ms var(--ease) both;
+}
+.menu-list button {
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+}
+.menu-list button:hover:not(:disabled) { background: var(--surface); }
+.menu-list button:disabled { color: var(--faint); cursor: default; opacity: 0.6; }
+.menu-list button.danger { color: var(--danger); }
+.menu-list hr { border: 0; border-top: 1px solid var(--edge); margin: 0.3rem 0.4rem; }
+
+/* flex: 1 so a short conversation still has its composer at the bottom of
+   the screen, where a thumb expects it, rather than halfway up. */
+.thread { flex: 1; padding: 1.25rem 0 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.turn { animation: rise 300ms var(--ease) both; max-width: 84%; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Them: unboxed serif, given room. The person is the page, not a bubble. */
+/* Them: a bubble on the left, the mirror of yours -- a faint tint of the
+   accent so the two sides read apart at a glance, and the serif kept, so it
+   still sounds like a person rather than a system message. */
+.turn-muse {
+  align-self: flex-start;
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--edge));
+  border-radius: var(--r-lg) var(--r-lg) var(--r-lg) var(--r-sm);
+  padding: 0.6rem 0.95rem;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 1rem 0 0;
+}
+
+/* You: a quiet card, offset right. */
+.turn-user {
+  align-self: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-lg) var(--r-lg) var(--r-sm) var(--r-lg);
+  padding: 0.6rem 0.9rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 1rem;
+}
+
+.stamp { font-size: 0.68rem; color: var(--faint); letter-spacing: 0.04em; }
+.turn-muse + .stamp { margin-bottom: 0.5rem; }
+
+@keyframes blink { 0%,60%,100% { opacity: 0.25; } 30% { opacity: 1; } }
+
+.composer {
+  position: sticky;
+  bottom: 0;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--edge);
+  padding: 0.8rem 0 calc(0.9rem + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+.composer textarea {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  flex: 1;
+  max-height: 8rem;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  outline: none;
+  resize: none;
+  padding: 0.6rem 0;
+}
+.composer textarea::placeholder { color: var(--faint); }
+.send {
+  flex: 0 0 auto;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  border-radius: var(--r-full);
+  border: 0;
+  background: var(--accent);
+  color: #16121D;
+  font: inherit;
+  font-weight: 600;
+  padding: 0 1.1rem;
+  cursor: pointer;
+}
+.send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ---------------------------------------------------------------- a11y */
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+:focus:not(:focus-visible) { outline: none; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .btn:hover:not(:disabled), .muse-card:hover { transform: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --faint: #B0AABF; --edge: #4A4660; }
+}
+
+/* Two fields side by side — names, relationship — as Presence laid them out. */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+@media (max-width: 480px) { .pair { grid-template-columns: 1fr; } }
+
+/* The vibe panel — mood, topic, register. Presence's "Change how this goes". */
+.vibe { border-top: 1px solid var(--edge); margin-top: 1.5rem; padding-top: 0.4rem; }
+.vibe > button {
+  font: inherit; font-size: 0.78rem; cursor: pointer; background: none; border: 0;
+  color: var(--faint); padding: 0.6rem 0; min-height: var(--tap);
+  display: flex; gap: 0.5rem; align-items: center; width: 100%; text-align: left;
+}
+.vibe > button:hover { color: var(--muted); }
+.vibe > button b { font-weight: 500; color: var(--accent); }
+.vibe-panel { padding: 0.4rem 0 0.6rem; animation: rise 220ms var(--ease); }
+.vibe-panel > div { margin-bottom: 1.1rem; }
+.vibe-panel label { display: block; font-size: 0.72rem; color: var(--faint); margin-bottom: 0.5rem; }
+.vibe-panel .tag { cursor: pointer; padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+
+/* Message actions — edit, delete, delete-from-here. Kept out of the way until
+   the message is hovered, and always visible on touch where there is no hover. */
+.turn { position: relative; }
+.msg-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+  opacity: 0;
+  transition: opacity 140ms var(--ease);
+}
+.turn:hover .msg-actions,
+.turn:focus-within .msg-actions,
+.turn.is-picked .msg-actions { opacity: 1; }
+
+/* With a mouse they float just under the bubble instead of sitting invisibly
+   inside it: inline, every bubble carried an empty bar's worth of space, and a
+   short message squeezed "reply" into "rep / ly". */
+@media (hover: hover) {
+  .msg-actions {
+    position: absolute; top: 100%; left: 0; z-index: 5;
+    margin-top: 0;
+    width: max-content; max-width: min(90vw, 34rem);
+    flex-wrap: wrap; align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: var(--surface-2);
+    border: 1px solid var(--edge-lit);
+    border-radius: var(--r-full);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+    font-family: var(--sans);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .turn-user .msg-actions { left: auto; right: 0; }
+  .msg-actions .react-row { flex-basis: auto; }
+  .turn:hover .msg-actions,
+  .turn:focus-within .msg-actions,
+  .turn.is-picked .msg-actions { pointer-events: auto; }
+  .turn:hover, .turn:focus-within, .turn.is-picked { z-index: 6; }
+}
+.msg-actions button { white-space: nowrap; }
+
+/* On a phone there is no hover to hide them behind, and four links under
+   every line nearly doubled a conversation. They take no room until a message
+   is tapped, and they are real buttons when they do. */
+@media (hover: none) {
+  .msg-actions { display: none; }
+  .turn.is-picked .msg-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.55rem; }
+  .turn.is-picked .msg-actions button {
+    font-size: 0.78rem;
+    text-decoration: none;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--edge-lit);
+    border-radius: var(--r-full);
+    padding: 0.4rem 0.8rem;
+    font-family: var(--sans);
+  }
+}
+
+/* The tapped message, without moving anything around it. */
+.turn { position: relative; transition: transform 160ms var(--ease); -webkit-tap-highlight-color: transparent; }
+.turn-muse.is-picked { border-color: var(--edge-lit); background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); }
+.turn-user.is-picked { border-color: var(--edge-lit); background: var(--surface-2); }
+
+/* Swipe to reply. The arrow appears once letting go would reply. */
+.turn[data-swiping] { transition: none; }
+.turn[data-swiping]::before {
+  content: "↩";
+  position: absolute;
+  left: -2rem;
+  top: 50%;
+  transform: translateY(-50%) scale(0.7);
+  color: var(--faint);
+  font-family: var(--sans);
+  font-size: 1rem;
+  opacity: 0.5;
+  transition: transform 120ms var(--ease), opacity 120ms var(--ease);
+}
+.turn[data-swiping="ready"]::before { color: var(--accent); opacity: 1; transform: translateY(-50%) scale(1); }
+
+/* A burst of texts reads as a burst: close together, joined on the left. */
+.turn-muse + .turn-muse { margin-top: 0.25rem; border-top-left-radius: var(--r-sm); }
+.turn-user + .turn-user { margin-top: 0.25rem; border-top-right-radius: var(--r-sm); }
+
+.msg-actions button {
+  font: inherit;
+  font-size: 0.68rem;
+  background: none;
+  border: 0;
+  padding: 0.2rem 0;
+  color: var(--faint);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--edge-lit);
+}
+.msg-actions button:hover { color: var(--ink); }
+
+.msg-edit { margin-top: 0.4rem; }
+.msg-edit textarea { font-size: 0.95rem; }
+
+/* A circle's speaker label, and the overlapping avatars that stand for a group. */
+.turn-muse .who {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  font-family: var(--sans);
+  margin-bottom: 0.15rem;
+}
+.stack-avatars { display: flex; flex: 0 0 auto; }
+.stack-avatars .avatar { margin-left: -14px; border: 2px solid var(--bg); }
+.stack-avatars .avatar:first-child { margin-left: 0; }
+
+/* A card and the controls that act on it. The controls sit outside the card's
+   own button — nesting a button inside a button is not clickable, and assistive
+   tech announces the pair as one control. */
+.card-wrap { display: block; }
+.card-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0.25rem 0;
+}
+.card-actions button {
+  font: inherit;
+  font-size: 0.68rem;
+  background: none;
+  border: 0;
+  padding: 0.15rem 0;
+  color: var(--faint);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--edge-lit);
+}
+.card-actions button:hover { color: var(--danger); }
+/* Every other card action deletes something. Editing does not, and turning it
+   the same warning red says it does. */
+.card-actions button.safe:hover { color: var(--accent); }
+
+/* Save failures, and the warning before one. Running out of localStorage is
+   silent and total -- the app keeps working for the rest of the session and
+   loses everything on reload -- so this sits above whichever view is open
+   rather than waiting for the user to visit the home screen. */
+.notice {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.notice-bad { border-color: var(--danger); }
+.notice strong { display: block; margin-bottom: 0.15rem; }
+.notice .btn { flex-shrink: 0; }
+@media (max-width: 560px) { .notice .btn { width: 100%; } }
+
+/* What a character remembers. A list to read down, not a table to parse —
+   the sentence is the thing, everything else is context set quietly beneath. */
+.memories { list-style: none; margin: 1.5rem 0 0; padding: 0; }
+.memory {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--edge);
+}
+.memory:first-child { border-top: 1px solid var(--edge); }
+.memory p { margin: 0; font-size: 0.92rem; line-height: 1.55; }
+.memory-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--faint);
+}
+.memory-meta button {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-left: 0.5rem;
+  color: var(--faint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.memory-meta button:hover { color: var(--accent); }
+/* Forgetting is the destructive one, and it is permanent. */
+.memory-meta button:last-child:hover { color: var(--danger); }
+.memory-editing { background: var(--surface); padding: 0.9rem; border-radius: 10px; }
+
+/* A count that turned out to be a door. */
+.inline-link {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.inline-link:hover { color: var(--accent); }
+
+/* Making someone new: a strip, not three full-width panels.
+   
+   These used to open the home screen as tall cards, which put the people you
+   actually talk to nearly two screens down on a phone. You build a character
+   once and then talk to them for months, so the weight was backwards. */
+.make-row {
+  display: grid;
+  /* Two across even on a phone: four stacked full-width rows was most of a screen. */
+  grid-template-columns: repeat(auto-fit, minmax(min(calc(50% - 0.3rem), 13rem), 1fr));
+  gap: 0.6rem;
+}
+.make {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 1px dashed var(--edge);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: border-color 140ms var(--ease), color 140ms var(--ease), background 140ms var(--ease);
+}
+.make b { font-weight: 500; font-size: 0.86rem; color: var(--ink); }
+.make span { font-size: 0.72rem; color: var(--faint); line-height: 1.4; }
+.make:hover { border-color: var(--accent); background: var(--surface); }
+.make:hover b { color: var(--accent); }
+
+/* Card controls belong to their card. They sit outside its <button> because a
+   button inside a button is not clickable, but they should still read as part
+   of it rather than as loose text floating in the gap. */
+.card-wrap { position: relative; }
+.card-actions { padding: 0.4rem 0.25rem 0; opacity: 0.55; transition: opacity 140ms var(--ease); }
+.card-wrap:hover .card-actions,
+.card-wrap:focus-within .card-actions { opacity: 1; }
+/* Touch has no hover, and a control you cannot discover is not a control. */
+@media (hover: none) { .card-actions { opacity: 1; } }
+
+/* ------------------------------------------------------------- the tabs */
+
+/* Home: one tile per group of people, the people themselves one tap in. */
+.tab-tiles {
+  display: grid;
+  gap: 0.7rem;
+  /* Two across even on a phone: six tall tiles in one column was a screen and a half of scrolling to reach Circles. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+}
+.tab-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 1rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  transition: border-color 140ms var(--ease), transform 140ms var(--ease), background-color 140ms var(--ease);
+}
+.tab-tile:hover { border-color: var(--edge-lit); background: var(--surface-2); transform: translateY(-1px); }
+.tab-tile .stack-avatars { min-height: 44px; }
+.tab-tile-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.tab-tile b { font-weight: 600; font-size: 0.98rem; }
+.tab-tile span { color: var(--muted); font-size: 0.8rem; line-height: 1.45; }
+.tab-tile em { font-style: normal; color: var(--accent); font-size: 0.72rem; letter-spacing: 0.04em; }
+
+/* Inside a tab: the others, to switch between without going home. Scrolls
+   sideways on a phone rather than wrapping into a wall of pills. */
+.tab-strip {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0.2rem;
+}
+.tab-strip::-webkit-scrollbar { display: none; }
+.tab-pill {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-full);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-pill:hover { border-color: var(--edge-lit); color: var(--ink); }
+.tab-pill[aria-current="page"] { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+
+/* ---------------------------------------------------- replying to a line */
+
+/* The quote sits in both kinds of bubble, so it resets the serif and the
+   pre-wrap the Muse's side uses. */
+.quote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  margin: 0 0 0.45rem;
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  white-space: normal;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 0;
+  border-left: 2px solid var(--accent);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.quote b { color: var(--accent); font-weight: 500; font-size: 0.7rem; letter-spacing: 0.03em; }
+.quote span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.quote-gone { cursor: default; font-style: italic; color: var(--faint); border-left-color: var(--edge-lit); }
+.quote-static { cursor: default; margin: 0; flex: 1; min-width: 0; }
+
+/* First row of the composer, so it grows with it rather than floating over. */
+.composer { flex-wrap: wrap; }
+.reply-bar {
+  flex: 1 0 100%;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  animation: rise 180ms var(--ease);
+}
+
+/* Where a quote jumped to, briefly. */
+.turn.flash { animation: flash 1.2s var(--ease); }
+@keyframes flash {
+  0%, 30% { box-shadow: 0 0 0 2px var(--accent); border-radius: var(--r-md); }
+  100% { box-shadow: 0 0 0 2px transparent; }
+}
+
+/* ---------------------------------------------------------------- traits */
+
+.trait-editor .tags { margin-top: 0; }
+.trait-add { margin-top: 0.5rem; max-width: 24rem; gap: 0.5rem; }
+.trait-add .input { font-size: 0.85rem; padding: 0.45rem 0.7rem; }
+button.tag { font-family: inherit; cursor: pointer; }
+button.tag:disabled { opacity: 0.45; cursor: not-allowed; }
+.tag-on { color: var(--ink); border-color: var(--edge-lit); }
+.tag-on:hover { border-color: var(--danger); color: var(--danger); }
+.tag-idea { background: none; border-style: dashed; color: var(--faint); }
+.tag-idea:hover { color: var(--accent); border-color: var(--accent); }
+
+.vibe-panel .input { width: 100%; margin-bottom: 0.2rem; }
+.member-traits { padding: 0.75rem 0; border-top: 1px solid var(--edge); }
+.member-traits:first-of-type { border-top: 0; padding-top: 0.2rem; }
+.member-traits > .row { margin-bottom: 0.45rem; }
+.member-traits .avatar { width: 28px; height: 28px; font-size: 0.8rem; }
+/* A tab with nobody in it yet still gets a face-shaped space, so the tiles
+   line up and the empty one reads as "room for someone" rather than broken. */
+.tab-tile .stack-avatars:empty::before {
+  content: "+";
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--edge-lit);
+  border-radius: var(--r-full);
+  color: var(--faint);
+  font-size: 1.1rem;
+}
+
+/* ---------------------------------------------------------------- calls */
+
+/* A call fills the screen and reads at arm's length: who, how long, what is
+   happening, and two buttons a thumb can find without looking. The ring around
+   the avatar is the only motion -- breathing while it listens, a stronger pulse
+   while it speaks -- so the state is visible from across a room. */
+.call {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(1.25rem + env(safe-area-inset-top)) 16px calc(1.5rem + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(120% 60% at 50% 30%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
+    var(--bg);
+  color: var(--ink);
+  text-align: center;
+}
+.call-top { width: 100%; max-width: 32rem; }
+.call-duration {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.call-who { margin-top: 12vh; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.call-who h1 { font-family: var(--serif); font-weight: 400; font-size: 2rem; margin: 0.6rem 0 0; }
+.call-state { margin: 0; min-height: 1.4em; color: var(--accent); font-size: 0.95rem; letter-spacing: 0.04em; }
+.call-ring {
+  border-radius: var(--r-full);
+  padding: 10px;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.call-ring .avatar { width: 112px; height: 112px; font-size: 2.6rem; }
+.call-listening .call-ring { animation: call-breathe 3.2s ease-in-out infinite; }
+.call-speaking .call-ring { animation: call-pulse 1.1s ease-out infinite; }
+.call-processing .call-ring { animation: call-breathe 1.4s ease-in-out infinite; }
+@keyframes call-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 22%, transparent); }
+  50% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 6%, transparent); }
+}
+@keyframes call-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  100% { box-shadow: 0 0 0 26px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .call-ring { animation: none !important; }
+  .call-speaking .call-ring { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 30%, transparent); }
+}
+
+.call-words {
+  flex: 1;
+  width: 100%;
+  max-width: 30rem;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  justify-content: flex-start;
+}
+.call-caption { margin: 0; font-family: var(--serif); font-size: 1.15rem; line-height: 1.55; color: var(--ink); }
+.call-heard { margin: 0; font-size: 0.95rem; color: var(--muted); font-style: italic; }
+.call-notice {
+  border: 1px solid var(--edge-lit);
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: 0.85rem 1rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+.call-notice p { margin: 0 0 0.6rem; }
+.call-notice p:last-child { margin: 0; }
+.call-error .call-notice { border-color: var(--danger); }
+
+.call-controls { display: flex; gap: 2.5rem; justify-content: center; margin-top: 1.5rem; }
+.call-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.call-btn > span {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  border: 1px solid var(--edge-lit);
+  color: var(--ink);
+}
+.call-btn[aria-pressed="true"] > span { background: var(--ink); color: var(--bg); }
+.call-end > span { background: #D9534F; border-color: #D9534F; color: #fff; }
+.call-close {
+  font-size: 0.95rem;
+  color: var(--ink);
+  border: 1px solid var(--edge-lit);
+  border-radius: var(--r-full);
+  padding: 0.75rem 1.4rem;
+}
+
+/* In the thread: where a call began, and the call button in the header. */
+.call-row {
+  align-self: center;
+  margin: 1.1rem 0 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-full);
+  padding: 0.25rem 0.8rem;
+}
+.chat-head .call-start { margin-left: auto; }
+.chat-head .call-start + .menu { margin-left: 0; }
+
+/* Voice picker, in Edit. */
+.voice-picker { margin-top: 1.25rem; }
+.voice-picker-label { display: block; font-size: 0.72rem; color: var(--faint); margin-bottom: 0.35rem; }
+.voice-group { margin-top: 0.4rem; }
+.voice-group-title { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+.voice-chip { display: inline-flex; align-items: center; gap: 0.15rem; }
+.voice-play {
+  font: inherit;
+  font-size: 0.6rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--edge);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.voice-play:disabled { opacity: 0.35; cursor: default; }
+
+/* Texts from them, on the home screen. */
+.outreach {
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.outreach b { font-weight: 600; font-size: 0.95rem; }
+.outreach > div > span, .outreach > span { display: block; color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-top: 0.15rem; }
+.outreach > .btn-ghost { align-self: flex-start; }
+.outreach-settings { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 0.4rem; border-top: 1px solid var(--edge); padding-top: 0.9rem; }
+.outreach-settings > .btn-ghost, .outreach-settings > .link-btn { align-self: flex-start; }
+.outreach-label { display: block; font-size: 0.72rem; color: var(--faint); margin-bottom: 0.45rem; }
+.outreach-pending { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.outreach-pending li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.85rem; color: var(--muted); }
+
+/* Photos. In a bubble, sized from the photo's own shape before it loads so the
+   thread never jumps; tap for full screen. */
+.photo {
+  display: block;
+  width: min(15rem, 62vw);
+  max-height: 22rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+  cursor: zoom-in;
+  margin: 0 0 0.35rem;
+}
+.photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Sent blurred: tap to see. */
+.photo.veiled { position: relative; cursor: pointer; }
+.photo.veiled img { filter: blur(22px) brightness(0.75); transform: scale(1.15); }
+.veil {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: #fff; font-family: var(--sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
+}
+.photo-missing { display: grid; place-items: center; height: 100%; color: var(--faint); font-size: 0.8rem; font-family: var(--sans); }
+.turn-user .photo { margin-left: auto; }
+.photo-full {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.9);
+  padding: 16px;
+  cursor: zoom-out;
+}
+.photo-full img { max-width: 100%; max-height: 100%; border-radius: var(--r-sm); }
+
+.photo-draft { flex: 1 0 100%; display: flex; align-items: flex-start; gap: 0.5rem; animation: rise 180ms var(--ease); }
+.photo-draft img { height: 4.5rem; max-width: 9rem; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--edge-lit); }
+.attach {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--r-full);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.attach:hover { color: var(--ink); background: var(--surface); }
+
+/* Reactions: a small emoji badge on the bubble's lower edge, and the row of
+   them in a message's actions. */
+.turn:has(.reacts) { margin-bottom: 0.7rem; }
+.reacts {
+  position: absolute;
+  bottom: -0.75rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.18rem 0.35rem;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  border: 1px solid var(--edge-lit);
+  font-family: var(--sans);
+  letter-spacing: 0.1em;
+}
+.turn-muse .reacts { right: 0.6rem; }
+.turn-user .reacts { left: 0.6rem; }
+.react-row { display: flex; gap: 0.15rem; flex-basis: 100%; }
+.msg-actions .react-pick {
+  font-size: 1.15rem;
+  text-decoration: none;
+  padding: 0.15rem 0.3rem;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  background: none;
+}
+.msg-actions .react-pick[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-2); }
+@media (hover: none) {
+  .turn.is-picked .msg-actions .react-pick { padding: 0.3rem 0.45rem; border: 1px solid transparent; background: none; }
+  .turn.is-picked .msg-actions .react-pick[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-2); }
+}
+
+/* You & them. */
+.story-head { display: flex; align-items: center; gap: 0.9rem; margin-top: 1.5rem; }
+.story-head .avatar { width: 64px; height: 64px; font-size: 1.6rem; }
+.story-head h1 { font-size: 1.7rem; margin: 0; }
+.story-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.5rem; }
+.story-stat {
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-md);
+  padding: 0.75rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.story-stat b { font-family: var(--serif); font-weight: 400; font-size: 1.35rem; color: var(--ink); line-height: 1.2; overflow-wrap: anywhere; }
+.story-stat span { font-size: 0.72rem; color: var(--faint); line-height: 1.35; }
+.story-note {
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--edge));
+  border-radius: var(--r-lg);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.story-note p { margin: 0; font-family: var(--serif); font-size: 1.05rem; line-height: 1.55; white-space: pre-wrap; }
+.story-note .btn-ghost { align-self: flex-start; }
+.story-line { list-style: none; margin: 0; padding: 0 0 0 0.9rem; border-left: 1px solid var(--edge-lit); display: flex; flex-direction: column; gap: 0.75rem; }
+.story-line li { position: relative; font-size: 0.92rem; color: var(--ink); line-height: 1.45; }
+.story-line li::before { content: ""; position: absolute; left: calc(-0.9rem - 4px); top: 0.45rem; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.story-line li span { display: block; font-size: 0.72rem; color: var(--faint); letter-spacing: 0.03em; }
+@media (max-width: 360px) { .story-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* A voice note from them: play, a track that fills as it plays, the length. */
+.vnote { display: flex; flex-direction: column; gap: 0.3rem; min-width: min(14rem, 58vw); font-family: var(--sans); }
+.vnote-row { display: flex; align-items: center; gap: 0.6rem; }
+.vnote-play {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--r-full);
+  border: 0;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.vnote-play:disabled { opacity: 0.5; cursor: default; }
+.vnote-track { flex: 1; height: 4px; border-radius: var(--r-full); background: var(--edge-lit); overflow: hidden; }
+.vnote-track i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform 250ms linear; }
+.vnote-time { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vnote audio { display: none; }
+.vnote-words { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--faint); font-size: 0.72rem; cursor: pointer; }
+.vnote-text { margin: 0; font-family: var(--serif); font-size: 0.95rem; color: var(--muted); }
+
+/* A song they sent: what it is, and where to play it. */
+.song { display: flex; align-items: center; gap: 0.65rem; font-family: var(--sans); min-width: min(14rem, 58vw); }
+.song-icon {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+}
+.song-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.song-name b { font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.song-name span { font-size: 0.78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.song-links { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.72rem; }
+.song-links a { color: var(--accent); text-decoration: none; }
+
+/* The story page: the moment still to come, and the quiz score. */
+.story-next { opacity: 0.6; }
+.story-score { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1.25rem; }
+.story-score div { display: flex; flex-direction: column; }
+.story-score b { font-family: var(--serif); font-size: 2rem; line-height: 1; }
+.story-score span { font-size: 0.75rem; color: var(--muted); }
+.story-score p { flex-basis: 100%; margin: 0; }
+.stamp.point { color: var(--accent); }
+
+/* A picture over the initial, filling the circle. */
+.avatar { position: relative; overflow: hidden; }
+.avatar-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.picture-row { gap: 0.6rem; flex-wrap: wrap; margin-top: 0.9rem; align-items: center; }
+
+/* Videos: in the thread, and waiting to be sent. */
+.video { cursor: default; }
+.video video { display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }
+.video-draft { position: relative; display: inline-block; }
+.video-draft video { height: 4.5rem; max-width: 9rem; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--edge-lit); display: block; }
+.video-draft b { position: absolute; left: 0.3rem; bottom: 0.3rem; font-size: 0.7rem; color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.8); }
+
+/* How close you have got: the story page's meter, and the level-up banner. */
+.bond { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 1.25rem; }
+.bond-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.bond-row b { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; color: var(--accent); }
+.bond-row span { font-size: 0.75rem; color: var(--faint); }
+.bond-bar { height: 6px; border-radius: var(--r-full); background: var(--surface-2); overflow: hidden; }
+.bond-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 400ms var(--ease); }
+.bond-up { margin: 0.75rem 0 0; animation: rise 300ms var(--ease) both; }
+.earlier { align-self: center; margin: 0.5rem 0; font-size: 0.8rem; }
+.forget-about { gap: 0.5rem; margin-top: 1.5rem; }
+.forget-about .input { flex: 1; min-width: 0; }
+
+/* Photos of someone, for their look and vibe. */
+.look-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 0.6rem; margin: 1.25rem 0 0.4rem; }
+.look-thumb { position: relative; aspect-ratio: 1; border-radius: var(--r-md); overflow: hidden; background: var(--surface-2); }
+.look-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.look-thumb button { position: absolute; top: 0.25rem; right: 0.25rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 0; background: rgb(0 0 0 / 0.6); color: #fff; font-size: 1rem; line-height: 1; cursor: pointer; }
+.look-add { aspect-ratio: 1; border-radius: var(--r-md); border: 1px dashed var(--edge-lit); background: none; color: var(--muted); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.look-add:hover { color: var(--ink); border-color: var(--accent); }
+.look-card { margin-top: 1.25rem; padding: 0.9rem 1rem; border: 1px solid var(--edge); border-radius: var(--r-md); background: var(--surface); font-size: 0.9rem; line-height: 1.5; }
+.look-error { color: var(--danger); font-size: 0.85rem; margin: 0.5rem 0; }
+
+/* The chat list on the home screen: one row per conversation, WhatsApp-style. */
+.chat-list { list-style: none; margin: 0 -0.5rem; padding: 0; }
+.chat-row {
+  display: flex; align-items: center; gap: 0.85rem; width: 100%; padding: 0.7rem 0.5rem;
+  background: none; border: 0; border-bottom: 1px solid var(--edge); color: inherit; font: inherit;
+  text-align: left; cursor: pointer; border-radius: 0;
+}
+.chat-row:hover { background: var(--surface); }
+.chat-row .avatar { flex: 0 0 auto; }
+.chat-row-text { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+.chat-row-top, .chat-row-bottom { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.chat-row-top b { font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-row-time { flex: 0 0 auto; font-size: 0.72rem; color: var(--faint); }
+.chat-row-time.unread { color: var(--accent); }
+.chat-row-preview { min-width: 0; flex: 1; font-size: 0.88rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-row-badge {
+  flex: 0 0 auto; min-width: 1.25rem; height: 1.25rem; padding: 0 0.35rem; border-radius: var(--r-full);
+  background: var(--accent); color: #16121D; font-size: 0.72rem; font-weight: 700; display: grid; place-items: center;
+}
+/* A group's two faces, squeezed into the width of one avatar so the text lines up. */
+.chat-row .stack-avatars { width: 44px; height: 44px; position: relative; }
+.chat-row .stack-avatars .avatar { position: absolute; width: 30px; height: 30px; font-size: 0.85rem; margin: 0; border-width: 2px; }
+.chat-row .stack-avatars .avatar:first-child { top: 0; left: 0; }
+.chat-row .stack-avatars .avatar:nth-child(2) { bottom: 0; right: 0; }
+
+/* A recovery code, shown once. */
+.recovery-code {
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.6rem; letter-spacing: 0.12em;
+  margin: 1.25rem 0; padding: 1rem 1.1rem; border: 1px dashed var(--accent); border-radius: var(--r-md);
+  background: var(--surface); text-align: center; user-select: all; overflow-wrap: anywhere;
+}
+
+/* The scrapbook. */
+.scrap-list { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.scrap-item { padding: 0.8rem 0.95rem; border: 1px solid var(--edge); border-radius: var(--r-md); background: var(--surface); display: flex; flex-direction: column; gap: 0.35rem; }
+.scrap-text { margin: 0; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.scrap-text.muse { font-family: var(--serif); font-size: 1.02rem; }
+
+/* ---------------------------------------------------------------- keep it going */
+.blocked-sheet { margin-top: 1rem; padding: 0.9rem 1rem; border: 1px solid var(--edge-lit); border-radius: var(--r-md); background: var(--surface); animation: screen-in 220ms var(--ease) both; }
+.blocked-title { margin: 0; font-family: var(--serif); font-size: 1.05rem; }
+.blocked-options { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.6rem; }
+.blocked-opt { text-align: left; font: inherit; cursor: pointer; color: var(--ink); padding: 0.65rem 0.8rem; border: 1px solid var(--edge); border-radius: var(--r-md); background: var(--bg); display: flex; flex-direction: column; gap: 0.15rem; }
+.blocked-opt:hover { border-color: var(--accent); }
+.blocked-opt b { font-weight: 600; font-size: 0.92rem; }
+.blocked-opt span { color: var(--muted); font-size: 0.8rem; }
+
+/* ---------------------------------------------------------------- visual pass */
+
+/* Screens move in rather than appear. Ends on `transform: none`, so a sticky
+   composer inside is not left in a different containing block afterwards. */
+@keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.shell { animation: screen-in 260ms var(--ease) both; }
+
+/* Day dividers, and the time under the last bubble of a burst. */
+.day-divider {
+  align-self: stretch; display: flex; align-items: center; gap: 0.75rem;
+  margin: 1.4rem 0 0.2rem; color: var(--faint); font-size: 0.72rem; letter-spacing: 0.06em;
+}
+.day-divider::before, .day-divider::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
+.turn-time { font-size: 0.64rem; color: var(--faint); letter-spacing: 0.03em; margin: 0.15rem 0.4rem 0; }
+.turn-time-user { align-self: flex-end; }
+.turn-time-muse { align-self: flex-start; }
+
+/* In a group, who is speaking: a small picture beside the name, once per burst. */
+.turn-muse .who { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem; }
+.avatar-sm { width: 20px; height: 20px; font-size: 0.7rem; }
+
+/* Typing: three soft dots in a bubble, then who. */
+.typing { display: flex; align-items: center; gap: 0.6rem; margin: 0.75rem 0; font-size: 0.78rem; letter-spacing: 0.04em; color: var(--accent); }
+.typing-dots {
+  display: inline-flex; gap: 4px; padding: 0.55rem 0.7rem; border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--edge));
+}
+.typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: typing-bounce 1.2s ease-in-out infinite; }
+.typing-dots i:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.45; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+/* Something unread: a ring around the picture. */
+.avatar-ring { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+
+/* The chat list: search, pinned and archived, and the swipe that reveals them. */
+.chat-search { margin: 0 0 0.6rem; }
+.archived-toggle { margin-top: 0.9rem; font-size: 0.8rem; }
+.chat-swipe { position: relative; overflow: hidden; }
+.chat-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 152px; display: flex; visibility: hidden; }
+.chat-swipe[data-open="1"] .chat-actions, .chat-swipe:hover .chat-actions, .chat-swipe:focus-within .chat-actions { visibility: visible; }
+.chat-action { flex: 1; border: 0; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.chat-action.pin { background: var(--accent); color: #16121D; }
+.chat-action.archive { background: var(--edge-lit); color: var(--ink); }
+.chat-swipe .chat-row { position: relative; background: var(--bg); transition: transform 220ms var(--ease); }
+.chat-swipe .chat-row:hover { background: var(--surface); }
+.chat-swipe .chat-row.dragging { transition: none; }
+@media (hover: hover) {
+  .chat-swipe:hover .chat-row, .chat-swipe:focus-within .chat-row { transform: translateX(-152px); transition-delay: 350ms; }
+}
+.chat-row-pin { font-size: 0.7rem; }
+
+/* The welcome screen. */
+.welcome { margin-top: 1.25rem; max-width: 30rem; }
+.welcome-art { display: block; width: min(15rem, 70%); height: auto; margin-bottom: 0.5rem; animation: welcome-float 6s ease-in-out infinite; }
+@keyframes welcome-float { 50% { transform: translateY(-6px); } }
+.welcome-points { list-style: none; margin: 1.25rem 0 1.5rem; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.welcome-points li { display: flex; flex-direction: column; gap: 0.1rem; padding-left: 0.85rem; border-left: 2px solid var(--accent); }
+.welcome-points b { font-weight: 600; font-size: 0.95rem; }
+.welcome-points span { color: var(--muted); font-size: 0.85rem; line-height: 1.45; }
+.welcome-form { max-width: 24rem; gap: 0.5rem; }
+.welcome-form .input { flex: 1; min-width: 0; }
+
+/* Loading: the shape of the list, shimmering, instead of a blank page. */
+.skeleton-list { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.15rem; }
+.skeleton-row { display: flex; gap: 0.85rem; align-items: center; }
+.skeleton-row > div { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+.skeleton { display: block; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+.skeleton-avatar { width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto; }
+.skeleton-line { height: 0.8rem; width: 55%; }
+.skeleton-line.short { height: 0.65rem; width: 35%; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* On a call: ripples while someone is talking, and a waveform that moves with the line. */
+.call-ring { position: relative; }
+.call-ring::before, .call-ring::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none; }
+.call-speaking .call-ring::before { animation: call-ripple 2s ease-out infinite; }
+.call-speaking .call-ring::after { animation: call-ripple 2s ease-out 0.9s infinite; }
+.call-listening .call-ring::before { border-color: var(--faint); animation: call-ripple 3.6s ease-out infinite; }
+@keyframes call-ripple { from { transform: scale(1); opacity: 0.5; } to { transform: scale(1.9); opacity: 0; } }
+.call-wave { display: flex; align-items: center; justify-content: center; gap: 5px; height: 26px; margin-top: 0.35rem; }
+.call-wave i { width: 4px; height: 6px; border-radius: 2px; background: var(--accent); opacity: 0.3; }
+.call-speaking .call-wave i { animation: call-wave 0.9s ease-in-out infinite; opacity: 1; }
+.call-listening .call-wave i { animation: call-wave 1.8s ease-in-out infinite; opacity: 0.55; }
+.call-processing .call-wave i { animation: call-wave 1.3s ease-in-out infinite; opacity: 0.4; }
+@keyframes call-wave { 0%, 100% { height: 6px; } 50% { height: 24px; } }
