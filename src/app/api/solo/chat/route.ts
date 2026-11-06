@@ -1,3 +1,4 @@
+import { soloGate } from "@/lib/authorize";
 import { z } from "zod";
 
 import { streamGuarded, userFacingError } from "@/lib/ai";
@@ -172,6 +173,9 @@ const bodySchema = z.object({
 const MAX_TOTAL_CHARS = 60_000;
 
 export async function POST(req: Request) {
+  const denied = await soloGate();
+  if (denied) return denied;
+
   let raw: unknown;
   try {
     raw = await req.json();

@@ -54,7 +54,8 @@ export function Welcome({ count, onStart }: { count: number; onStart: (name: str
         />
         <button className="btn" disabled={!name.trim()}>Start</button>
       </form>
-      <p className="fine" style={{ marginTop: "0.75rem" }}>No account needed. Everything stays in this browser unless you sign in.</p>
+      <p className="fine" style={{ marginTop: "0.75rem" }}>Sign in to chat. Your characters are AI, not real people.</p>
+      <p className="fine">By starting you confirm you are 18 or older and agree to the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.</p>
     </section>
   );
 }

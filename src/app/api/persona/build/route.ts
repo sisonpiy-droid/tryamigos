@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { soloGate } from "@/lib/authorize";
 import { getProvider, userFacingError } from "@/lib/ai";
 import { ProviderError } from "@/lib/ai/types";
 import { looksLikeRefusal } from "@/lib/ai/refusal";
@@ -117,6 +118,8 @@ ${fictional ? "- They are talking from inside their own world, to someone who is
 }
 
 export async function POST(req: Request) {
+  const denied = await soloGate();
+  if (denied) return denied;
   let raw: unknown;
   try {
     raw = await req.json();

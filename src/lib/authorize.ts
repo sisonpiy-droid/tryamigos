@@ -109,3 +109,15 @@ export function errorResponse(err: unknown): Response {
   console.error(err);
   return Response.json({ error: "Something went wrong." }, { status: 500 });
 }
+
+/** For the /api/solo AI routes: a 401 Response when nobody is signed in, else null.
+ *  Anonymous callers cannot be rate-limited or billed, so a script could run up
+ *  the model bill; this keeps them out until per-user caps exist. */
+export async function soloGate(): Promise<Response | null> {
+  try {
+    await requireUserId();
+    return null;
+  } catch {
+    return Response.json({ error: "Sign in to keep chatting." }, { status: 401 });
+  }
+}

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { soloGate } from "@/lib/authorize";
 import { getProvider, userFacingError } from "@/lib/ai";
 import { NOT_ENOUGH } from "@/lib/presence/persona";
 import { readResearch } from "@/lib/presence/research";
@@ -74,6 +75,8 @@ and nothing else. If one of them is plainly who almost everyone means ("Shahrukh
 4. The name does not match anyone with a public record -- a private individual, or nobody you can find. Reply with exactly ${NOT_ENOUGH} and nothing else.`;
 
 export async function POST(req: Request) {
+  const denied = await soloGate();
+  if (denied) return denied;
   let raw: unknown;
   try {
     raw = await req.json();
