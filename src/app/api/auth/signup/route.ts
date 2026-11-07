@@ -25,6 +25,15 @@ export async function POST(req: Request) {
     return Response.json({ error: message }, { status: 400 });
   }
 
+  /* ponytail: a global brake on new accounts per hour (no per-IP store yet), so
+     account farming cannot multiply the daily AI budget. Per-IP or email
+     verification if real sign-ups ever hit this. */
+  const perHour = Number(process.env.SIGNUPS_PER_HOUR) || 30;
+  const recent = await prisma.user.count({ where: { createdAt: { gt: new Date(Date.now() - 3_600_000) } } });
+  if (recent >= perHour) {
+    return Response.json({ error: "Sign-ups are busy right now. Try again in a little while." }, { status: 429 });
+  }
+
   const { email, password, name, timezone } = parsed.data;
   const normalised = email.toLowerCase();
 
