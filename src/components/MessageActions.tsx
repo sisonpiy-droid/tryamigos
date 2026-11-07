@@ -17,6 +17,18 @@ import { REACTIONS } from "@/lib/solo/store";
  * actually want.
  */
 
+/** Flags a line for the founder to read. Asks for an optional reason first. */
+async function report(content: string) {
+  const reason = window.prompt("Report this message. What is wrong with it? (optional)");
+  if (reason === null) return;
+  const res = await fetch("/api/report", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ content, reason }),
+  }).catch(() => null);
+  window.alert(res?.ok ? "Thanks. We will take a look." : "Could not send the report. Sign in and try again.");
+}
+
 export function MessageActions({
   content,
   onReply,
@@ -89,6 +101,7 @@ export function MessageActions({
       <button onClick={() => { onReply(); done(); }} aria-label="Reply to this message">reply</button>
       <button onClick={() => { setText(content); setEditing(true); }} aria-label="Edit message">edit</button>
       <button onClick={() => { onDelete(); done(); }} aria-label="Delete message">delete</button>
+      <button onClick={() => { void report(content); done(); }} aria-label="Report this message">report</button>
       <button
         onClick={() => {
           if (confirm("Delete this message and everything after it?")) { onDeleteFrom(); done(); }

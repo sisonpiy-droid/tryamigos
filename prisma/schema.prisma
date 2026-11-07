@@ -144,6 +144,7 @@ model User {
 
   @@index([deletedAt])
   usageDays UsageDay[]
+  messageReports MessageReport[]
 }
 
 /// The /solo app keeps everything in the browser. Signed in, a copy of that state
@@ -643,4 +644,18 @@ model UsageDay {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, day])
+}
+
+/// A user flagging one reply (solo characters live in the browser, so there is no Muse row to point at).
+/// Read by the founder, never shown in the app.
+model MessageReport {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
