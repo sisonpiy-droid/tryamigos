@@ -110,14 +110,36 @@ export function errorResponse(err: unknown): Response {
   return Response.json({ error: "Something went wrong." }, { status: 500 });
 }
 
-/** For the /api/solo AI routes: a 401 Response when nobody is signed in, else null.
- *  Anonymous callers cannot be rate-limited or billed, so a script could run up
- *  the model bill; this keeps them out until per-user caps exist. */
-export async function soloGate(): Promise<Response | null> {
+/** Daily AI budget per user, in units. A chat turn is 1; speech is 3; an image is 10.
+ *  Tune with DAILY_AI_UNITS. AI_KILL_SWITCH=1 turns every AI route off at once. */
+const DAILY_UNITS = Number(process.env.DAILY_AI_UNITS) || 400;
+
+/** For the /api/solo and /api/persona AI routes: a Response when the call must not
+ *  run (not signed in, kill switch on, or daily budget spent), else null.
+ *  `units` is the call's cost weight against the user's daily budget. */
+export async function soloGate(units = 1): Promise<Response | null> {
+  if (process.env.AI_KILL_SWITCH === "1") {
+    return Response.json({ error: "Amigos is paused for a moment. Try again soon." }, { status: 503 });
+  }
+  let userId: string;
   try {
-    await requireUserId();
-    return null;
+    userId = await requireUserId();
   } catch {
     return Response.json({ error: "Sign in to keep chatting." }, { status: 401 });
   }
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    const row = await prisma.usageDay.upsert({
+      where: { userId_day: { userId, day } },
+      create: { userId, day, units },
+      update: { units: { increment: units } },
+    });
+    if (row.units > DAILY_UNITS) {
+      return Response.json({ error: "You have hit the daily limit. It resets tomorrow." }, { status: 429 });
+    }
+  } catch (err) {
+    // ponytail: fails open if the UsageDay table is missing (migration not applied yet); fail closed once it is.
+    console.error("usage cap unavailable", err);
+  }
+  return null;
 }

@@ -143,6 +143,7 @@ model User {
   soloSync      SoloSync?
 
   @@index([deletedAt])
+  usageDays UsageDay[]
 }
 
 /// The /solo app keeps everything in the browser. Signed in, a copy of that state
@@ -631,4 +632,15 @@ model ProactiveInteraction {
   trigger ProactiveTrigger @relation(fields: [triggerId], references: [id], onDelete: Cascade)
 
   @@index([deviceId, sentAt])
+}
+
+/// Daily AI spend per user, in cost units (see soloGate). One row per user per day.
+model UsageDay {
+  userId String
+  day    String
+  units  Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
 }

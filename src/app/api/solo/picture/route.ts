@@ -21,7 +21,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const denied = await soloGate();
+  const denied = await soloGate(10);
   if (denied) return denied;
 
   let raw: unknown;
