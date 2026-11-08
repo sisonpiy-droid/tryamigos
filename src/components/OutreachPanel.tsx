@@ -67,8 +67,8 @@ export function OutreachPanel({ state, update }: { state: SoloState; update: Upd
     const r = await applyOutreach(state, update, patch, askPush);
     setBusy(false);
     if (!r.ok) setNote("Couldn't save that. Check your connection and try again.");
-    else if (r.push === "denied") setNote("Notifications are blocked for this site, so their texts will wait here until you open MUSE. You can allow notifications in your browser settings.");
-    else if (r.push === "unsupported") setNote(support === "needs-install" ? "On iPhone, add MUSE to your Home Screen (Share → Add to Home Screen) and open it from there to get notifications. Until then their texts wait here." : "This browser can't show notifications, so their texts will wait here until you open MUSE.");
+    else if (r.push === "denied") setNote("Notifications are blocked for this site, so their texts will wait here until you open Try Amigos. You can allow notifications in your browser settings.");
+    else if (r.push === "unsupported") setNote(support === "needs-install" ? "On iPhone, add Try Amigos to your Home Screen (Share → Add to Home Screen) and open it from there to get notifications. Until then their texts wait here." : "This browser can't show notifications, so their texts will wait here until you open Try Amigos.");
     else if (r.push) setNote("Notifications couldn't be set up just now. Their texts will still wait here.");
   }
 

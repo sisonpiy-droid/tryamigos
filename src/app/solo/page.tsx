@@ -352,7 +352,7 @@ export default function SoloPage() {
         className="btn"
         hidden={saveIssue === "corrupt"}
         onClick={() => download(
-          safeFilename("muse-backup", "json"),
+          safeFilename("amigos-backup", "json"),
           JSON.stringify(state, null, 2),
           "application/json"
         )}
@@ -372,7 +372,7 @@ export default function SoloPage() {
   if (!state) {
     return (
       <main className="shell" aria-busy="true" aria-label="Loading">
-        <header className="row" style={{ justifyContent: "space-between" }}><p className="mark">Muse</p></header>
+        <header className="row" style={{ justifyContent: "space-between" }}><p className="mark">Try Amigos</p></header>
         <div className="skeleton-list">
           {[0, 1, 2, 3, 4].map((i) => (
             <div key={i} className="skeleton-row"><i className="skeleton skeleton-avatar" /><div><i className="skeleton skeleton-line" /><i className="skeleton skeleton-line short" /></div></div>
@@ -724,7 +724,7 @@ function SoloHome({
   return (
     <main className="shell">
       <header className="row" style={{ justifyContent: "space-between" }}>
-        <p className="mark">Muse</p>
+        <p className="mark">Try Amigos</p>
         <button className="link-btn" onClick={onAccount} style={{ textDecoration: "none", fontSize: "0.78rem" }}>
           {cloudEmail ? `synced · ${cloudEmail}` : "this browser only · sign in to sync"}
         </button>
@@ -783,7 +783,7 @@ function SoloHome({
             <button
               className="btn-ghost"
               onClick={() => download(
-                safeFilename("muse-solo", "json"),
+                safeFilename("amigos-solo", "json"),
                 JSON.stringify(state, null, 2),
                 "application/json"
               )}
@@ -839,7 +839,7 @@ function SoloHome({
       )}
 
       <p className="fine" style={{ marginTop: "2.5rem" }}>
-        Every Muse is an AI.{" "}
+        Every Amigo is an AI.{" "}
         {cloudEmail
           ? "You're signed in, so a copy of your people, chats and memories is stored on the server to sync between your devices. Photos, voice notes and videos stay on the device that made them."
           : "Your people, conversations and memories are never stored on a server — clearing this browser's data deletes them all, and there is no way to get them back."}

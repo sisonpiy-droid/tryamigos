@@ -130,7 +130,7 @@ export default function CreateWizard() {
   return (
     <main className="shell">
       <header className="row" style={{ justifyContent: "space-between" }}>
-        <p className="mark">New Muse</p>
+        <p className="mark">New Amigo</p>
         <Link href="/" className="link-btn" style={{ textDecoration: "none" }}>Cancel</Link>
       </header>
 

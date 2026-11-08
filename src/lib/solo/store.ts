@@ -1080,7 +1080,7 @@ export function parseBackup(text: string): RestoreResult {
   }
 
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return { ok: false, error: "That doesn't look like a MUSE backup." };
+    return { ok: false, error: "That doesn't look like a Try Amigos backup." };
   }
   const p = raw as Partial<SoloState>;
 
@@ -1088,7 +1088,7 @@ export function parseBackup(text: string): RestoreResult {
      has none of these. Checking two keys distinguishes them without demanding a
      backup from a newer version match exactly. */
   if (!Array.isArray(p.muses) || typeof p.conversations !== "object" || p.conversations === null) {
-    return { ok: false, error: "That doesn't look like a MUSE backup — it has no people or conversations in it." };
+    return { ok: false, error: "That doesn't look like a Try Amigos backup — it has no people or conversations in it." };
   }
 
   const conversations: Record<string, SoloMessage[]> = {};

@@ -20,11 +20,11 @@ const serif = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "MUSE — create anyone, talk to anyone",
+  title: "Try Amigos — create anyone, talk to anyone",
   description: "AI personalities who remember you.",
-  /* Added to an iPhone Home Screen, MUSE opens as an app -- and only then can
+  /* Added to an iPhone Home Screen, Try Amigos opens as an app -- and only then can
      Safari show it a notification. */
-  appleWebApp: { capable: true, title: "MUSE", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Try Amigos", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
 };
 

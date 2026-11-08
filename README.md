@@ -1,4 +1,4 @@
-# MUSE
+# Try Amigos
 
 Create anyone. Talk to anyone.
 

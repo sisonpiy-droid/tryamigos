@@ -70,7 +70,7 @@ export async function GET() {
     return new Response(JSON.stringify(archive, null, 2), {
       headers: {
         "content-type": "application/json; charset=utf-8",
-        "content-disposition": `attachment; filename="${safeFilename("muse-account", "json")}"`,
+        "content-disposition": `attachment; filename="${safeFilename("amigos-account", "json")}"`,
         "cache-control": "no-store",
       },
     });

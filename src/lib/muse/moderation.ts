@@ -67,7 +67,7 @@ export function screenMuse(input: ScreenInput): ScreenVerdict {
       return {
         ok: false,
         reason:
-          "A Muse can feel completely real, but it can't be told to deny being an AI when someone asks directly. Everything else about them is yours.",
+          "An Amigo can feel completely real, but it can't be told to deny being an AI when someone asks directly. Everything else about them is yours.",
       };
     }
   }
@@ -77,7 +77,7 @@ export function screenMuse(input: ScreenInput): ScreenVerdict {
       return {
         ok: false,
         reason:
-          "This reads like a copy of a specific real person. Muses can be inspired by anyone, but not built to stand in for someone identifiable without their say-so.",
+          "This reads like a copy of a specific real person. Amigos can be inspired by anyone, but not built to stand in for someone identifiable without their say-so.",
       };
     }
   }

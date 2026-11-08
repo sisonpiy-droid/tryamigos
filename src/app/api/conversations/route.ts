@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     let raw: unknown;
     try { raw = await req.json(); } catch { return Response.json({ error: "Invalid request." }, { status: 400 }); }
     const parsed = createSchema.safeParse(raw);
-    if (!parsed.success) return Response.json({ error: "Which Muse?" }, { status: 400 });
+    if (!parsed.success) return Response.json({ error: "Which Amigo?" }, { status: 400 });
 
     const muse = await requireViewableMuse(parsed.data.museId, userId);
 

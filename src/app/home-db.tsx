@@ -58,7 +58,7 @@ export default async function DatabaseHome() {
   return (
     <main className="shell">
       <header className="row" style={{ justifyContent: "space-between" }}>
-        <p className="mark">Muse</p>
+        <p className="mark">Try Amigos</p>
         <a href="/create" className="btn" style={{ textDecoration: "none", padding: "0.45rem 1rem", minHeight: "auto" }}>
           Create
         </a>
@@ -93,7 +93,7 @@ export default async function DatabaseHome() {
         </>
       )}
 
-      <h2 className="section-title">{mine.length ? "Your Muses" : "Create your own"}</h2>
+      <h2 className="section-title">{mine.length ? "Your Amigos" : "Create your own"}</h2>
       {mine.length ? (
         <div className="card-grid">
           {mine.map((m) => (
@@ -112,7 +112,7 @@ export default async function DatabaseHome() {
         <div className="empty">
           <p>Your world is empty.</p>
           <a href="/create" className="btn" style={{ textDecoration: "none", display: "inline-block" }}>
-            Create your first Muse
+            Create your first Amigo
           </a>
         </div>
       )}
@@ -141,7 +141,7 @@ export default async function DatabaseHome() {
       </div>
 
       <p className="fine" style={{ marginTop: "2.5rem" }}>
-        Every Muse is an AI. Conversations are private to your account.
+        Every Amigo is an AI. Conversations are private to your account.
       </p>
     </main>
   );

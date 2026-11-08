@@ -122,7 +122,7 @@ export function ExportMenu({
             onClick={() => download("/api/account/export", "account")}
             busy={busy === "account"}
             label="Everything in your account"
-            hint="Every Muse, conversation and memory"
+            hint="Every Amigo, conversation and memory"
           />
           {error && <p className="error" style={{ margin: "0.5rem 0.6rem 0.3rem" }}>{error}</p>}
         </div>

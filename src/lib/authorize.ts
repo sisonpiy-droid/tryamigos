@@ -63,12 +63,12 @@ export async function requireViewableMuse(museId: string, userId: string): Promi
 
   /* 404 rather than 403 for a private Muse the user does not own. A 403 would
      confirm the id exists, which turns id guessing into an enumeration oracle. */
-  if (!muse) throw new AuthError(404, "Muse not found");
+  if (!muse) throw new AuthError(404, "Amigo not found");
   if (muse.status === "ARCHIVED" && muse.ownerUserId !== userId) {
-    throw new AuthError(404, "Muse not found");
+    throw new AuthError(404, "Amigo not found");
   }
   if (muse.visibility === "PRIVATE" && muse.ownerUserId !== userId) {
-    throw new AuthError(404, "Muse not found");
+    throw new AuthError(404, "Amigo not found");
   }
   return muse;
 }
@@ -79,9 +79,9 @@ export async function requireOwnedMuse(museId: string, userId: string): Promise<
     where: { id: museId },
     include: { personality: true, behaviour: true },
   });
-  if (!muse) throw new AuthError(404, "Muse not found");
+  if (!muse) throw new AuthError(404, "Amigo not found");
   if (!muse.ownerUserId || muse.ownerUserId !== userId) {
-    throw new AuthError(404, "Muse not found");
+    throw new AuthError(404, "Amigo not found");
   }
   return muse;
 }

@@ -43,9 +43,9 @@ export interface CallView {
 type Update = (next: SoloState | ((cur: SoloState) => SoloState)) => void;
 
 const MESSAGES: Record<ListenError | "ai" | "tts" | "offline" | "timeout", string> = {
-  denied: "MUSE needs your microphone for calls. Allow it for this site in your browser settings, then try again.",
+  denied: "Try Amigos needs your microphone for calls. Allow it for this site in your browser settings, then try again.",
   "no-mic": "No microphone was found. Check one is connected and not in use by another app, then try again.",
-  unsupported: "This browser can't do voice calls. Open MUSE in Chrome, Edge or Safari.",
+  unsupported: "This browser can't do voice calls. Open Try Amigos in Chrome, Edge or Safari.",
   network: "Couldn't hear you. Try again.",
   failed: "Couldn't hear you. Try again.",
   ai: "Something went wrong. Try again.",

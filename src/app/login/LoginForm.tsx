@@ -67,14 +67,14 @@ export default function LoginForm() {
 
   return (
     <main className="shell" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-      <p className="mark">Muse</p>
+      <p className="mark">Try Amigos</p>
       <h1 className="display">
         {mode === "signup" ? <>Who do you want<br />to talk to?</> : <>Welcome back.</>}
       </h1>
       <p className="lede">
         {mode === "signup"
           ? "Create people worth talking to, or find someone already here. They remember you between conversations."
-          : "Your Muses are where you left them."}
+          : "Your Amigos are where you left them."}
       </p>
 
       <form onSubmit={submit} style={{ maxWidth: "22rem" }}>
@@ -140,7 +140,7 @@ export default function LoginForm() {
       </form>
 
       <p className="fine" style={{ marginTop: "2.5rem", maxWidth: "34rem" }}>
-        Every Muse is an AI. They can be warm and know you well, and they will tell you
+        Every Amigo is an AI. They can be warm and know you well, and they will tell you
         plainly that they are not a person if you ask.
       </p>
     </main>
